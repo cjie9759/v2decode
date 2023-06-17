@@ -39,35 +39,61 @@ func main() {
 		decode()
 		return
 	}
+	encode()
 
 }
 func decode() {
-
-	ReadFile(func(s *bufio.Scanner) {
-		// if !strings.HasPrefix(s,`vmess://`) {
-		// 	return
-		// }
-		t, err := base64.StdEncoding.DecodeString(s.Text()[8:])
+	var s *bufio.Scanner
+	{
+		f, err := os.ReadFile(path)
 		if err != nil {
-			fmt.Println(s.Text())
-			return
+			fmt.Println(err)
+			os.Exit(0)
 		}
-		fmt.Println(string(t))
-	})
-
+		b1, err := base64.StdEncoding.DecodeString(string(f))
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(0)
+		}
+		b := bytes.NewBuffer(b1)
+		s = bufio.NewScanner(b)
+	}
+	for s.Scan() {
+		fmt.Printf("%s\n", s.Text())
+		if strings.HasPrefix(s.Text(), `vmess://`) {
+			t, err := base64.StdEncoding.DecodeString(s.Text()[8:])
+			if err != nil {
+				fmt.Println(s.Text())
+				return
+			}
+			fmt.Println(string(t))
+		} else {
+			fmt.Println(s.Text())
+		}
+	}
 }
-func ReadFile(fun func(*bufio.Scanner)) {
+func encode() {
 	f, err := os.ReadFile(path)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(0)
 	}
-	b := bytes.NewBuffer(f)
+	res := bytes.NewBuffer(f)
 
-	scanner := bufio.NewScanner(b)
-	for scanner.Scan() {
+	b := bytes.NewBuffer(nil)
+	s := bufio.NewScanner(b)
+	for s.Scan() {
 		// fmt.Printf("%s\n", scanner.Text())
-		fun(scanner)
+		if !strings.HasPrefix(s.Text(), `{`) {
+			_, err := res.Write(s.Bytes())
+			if err != nil {
+				fmt.Println(err)
+			}
+		} else {
+			res.WriteString(`vmess://`)
+			res.Write([]byte(base64.StdEncoding.EncodeToString(s.Bytes())))
+		}
+		res.WriteString("\n")
 	}
-
+	fmt.Print(base64.StdEncoding.EncodeToString(res.Bytes()))
 }
