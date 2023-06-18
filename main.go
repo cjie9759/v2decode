@@ -59,7 +59,7 @@ func decode() {
 		s = bufio.NewScanner(b)
 	}
 	for s.Scan() {
-		fmt.Printf("%s\n", s.Text())
+		// fmt.Printf("%s\n", s.Text())
 		if strings.HasPrefix(s.Text(), `vmess://`) {
 			t, err := base64.StdEncoding.DecodeString(s.Text()[8:])
 			if err != nil {
@@ -94,6 +94,6 @@ func encode() {
 		}
 		res.WriteString("\n")
 	}
-	// fmt.Println(res.String())
+	fmt.Println(res.String())
 	fmt.Println(base64.StdEncoding.EncodeToString(res.Bytes()[:res.Len()-len("\n")]))
 }
