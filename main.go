@@ -78,9 +78,8 @@ func encode() {
 		fmt.Println(err)
 		os.Exit(0)
 	}
-	res := bytes.NewBuffer(f)
-
-	b := bytes.NewBuffer(nil)
+	b := bytes.NewBuffer(f)
+	res := bytes.NewBuffer(nil)
 	s := bufio.NewScanner(b)
 	for s.Scan() {
 		// fmt.Printf("%s\n", scanner.Text())
@@ -95,5 +94,6 @@ func encode() {
 		}
 		res.WriteString("\n")
 	}
-	fmt.Print(base64.StdEncoding.EncodeToString(res.Bytes()))
+	// fmt.Println(res.String())
+	fmt.Println(base64.StdEncoding.EncodeToString(res.Bytes()[:res.Len()-len("\n")]))
 }
