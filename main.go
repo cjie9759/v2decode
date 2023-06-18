@@ -94,6 +94,6 @@ func encode() {
 		}
 		res.WriteString("\n")
 	}
-	fmt.Println(res.String())
+	// fmt.Println(res.String())
 	fmt.Println(base64.StdEncoding.EncodeToString(res.Bytes()[:res.Len()-len("\n")]))
 }
