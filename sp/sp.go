@@ -14,6 +14,13 @@ import (
 	// _ "net/http/pprof"
 )
 
+type Sp struct {
+	Uri   string
+	Speed float64
+	Host  string
+	Filsh bool
+}
+
 func main() {
 	// go func() {
 	// 	log.Println(http.ListenAndServe("localhost:6060", nil))
@@ -29,20 +36,42 @@ func main() {
 
 	wg := &sync.WaitGroup{}
 	wg.Add(len(links))
-	for _, v := range links {
-		p := v
-		go down(p, wg)
+	sps := make([]*Sp, len(links))
+	for k := range links {
+		s := &Sp{Uri: links[k]}
+		sps[k] = s
+		go s.down(wg)
 	}
+
+	go func() {
+		for {
+			fmt.Print("\033[H\033[2J")
+			for k := range sps {
+				if sps[k].Filsh {
+					fmt.Printf("%s %.1f MB/s --------------------\n", sps[k].Host, sps[k].Speed)
+				} else {
+					fmt.Printf("%s		%.1f MB/s\n", sps[k].Host, sps[k].Speed)
+				}
+			}
+			time.Sleep(time.Millisecond * 100)
+		}
+	}()
 	wg.Wait()
 }
 
-func down(u string, wg *sync.WaitGroup) {
+func (s *Sp) down(wg *sync.WaitGroup) {
 	defer wg.Done()
+
+	{
+		ur, _ := url.Parse(s.Uri)
+		s.Host = `https://` + ur.Host
+	}
+
 	start := time.Now()
-	res, err := http.Get(u)
+	res, err := http.Get(s.Uri)
 	if err == nil {
 		defer res.Body.Close()
-
+		i := 0
 		{
 			b := make([]byte, 1024)
 			r := bufio.NewReader(res.Body)
@@ -55,20 +84,19 @@ func down(u string, wg *sync.WaitGroup) {
 					log.Fatalf("Error reading file: %v", err)
 					break
 				}
+				i++
+				s.Speed = float64(i>>10) / time.Since(start).Seconds()
+				// fmt.Printf("%.1f MB/s\n", s.Speed)
 			}
 		}
 
 		if err != nil {
-			fmt.Println(err, u)
+			fmt.Println(err, s.Uri)
 			return
 		}
-		{
-			// p :=
-			ur, _ := url.Parse(u)
-
-			fmt.Printf("https://%s  %.1f M/s\n", ur.Host, 100/time.Since(start).Seconds())
-		}
+		s.Filsh = true
+		// fmt.Printf("https://%s  %.1f M/s\n", s.Host, 100/time.Since(start).Seconds())
 	} else {
-		fmt.Println(u, err, "is down")
+		fmt.Println(s.Uri, err, "is down")
 	}
 }
