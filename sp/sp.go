@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -46,6 +47,9 @@ func main() {
 	go func() {
 		for {
 			fmt.Print("\033[H\033[2J")
+			sort.Slice(sps, func(i, j int) bool {
+				return sps[i].Speed > sps[j].Speed
+			})
 			for k := range sps {
 				if sps[k].Filsh {
 					fmt.Printf("%s %.1f MB/s --------------------\n", sps[k].Host, sps[k].Speed)
